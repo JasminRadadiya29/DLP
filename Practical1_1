@@ -1,0 +1,63 @@
+#include<stdio.h>
+#include<conio.h>
+
+int main() {
+    int t;
+    printf("Enter test case:\n");
+    scanf("%d",&t);
+    for(int i=0; i<t; i++){
+    int n;
+    int flag = 1;
+    printf("Enter the length of the string:\n");
+    scanf("%d", &n);
+
+    char c[n + 1]; 
+    int len = 0;
+
+    getchar(); 
+
+    printf("Enter the string:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%c", &c[i]);
+        len++;
+    }
+
+    c[n] = '\0'; 
+    if(len == 1){
+        flag = 0;
+    }
+    else if(len == 2){
+        if(c[0]!='b' || c[1] != 'b'){
+            flag = 0;
+        }
+    }
+    else{
+        for(int i=0; i<len-2; i++){
+            if(c[i] != 'a'){
+                flag = 0;
+            }
+        }
+        for(int i=len-2; i<n; i++){
+            if(c[i] != 'b'){
+                flag = 0;
+            }
+        }
+    }
+
+    if(flag == 1){
+        printf("valid string");
+    }
+    else{
+        printf("invalid string");
+    }
+
+
+    // printf("The entered string is:\n");
+    // for (int i = 0; i < n; i++) {
+    //     printf("%c", c[i]);
+    // }
+    printf("\n");
+    }
+
+    return 0;
+}
