@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+template <typename StateType, typename InputType>
+class DFA
+{
+private:
+    StateType initialState;
+    vector<StateType> acceptingStates;
+    map<pair<StateType, InputType>, StateType> transitionTable;
+
+public:
+    DFA(StateType initial, const vector<StateType> &accepting)
+        : initialState(initial), acceptingStates(accepting) {}
+
+    void addTransition(StateType fromState, InputType input, StateType toState)
+    {
+        transitionTable[{fromState, input}] = toState;
+    }
+
+    bool isAccepted(const vector<InputType> &input)
+    {
+        StateType currentState = initialState;
+
+        for (const auto &symbol : input)
+        {
+            if (transitionTable.find({currentState, symbol}) == transitionTable.end())
+            {
+                return false; // Invalid transition
+            }
+            currentState = transitionTable[{currentState, symbol}];
+        }
+
+        return find(acceptingStates.begin(), acceptingStates.end(), currentState) != acceptingStates.end();
+    }
+};
+
+int main()
+{
+    using StateType = char;
+    using InputType = char;
+
+    int numStates;
+    cout << "Enter the number of states: ";
+    cin >> numStates;
+
+    StateType initialState;
+    cout << "Enter the initial state: ";
+    cin >> initialState;
+
+    int numAcceptingStates;
+    cout << "Enter the number of accepting states: ";
+    cin >> numAcceptingStates;
+
+    vector<StateType> acceptingStates(numAcceptingStates);
+    cout << "Enter the accepting states: ";
+    for (int i = 0; i < numAcceptingStates; i++)
+    {
+        cin >> acceptingStates[i];
+    }
+
+    DFA<StateType, InputType> dfa(initialState, acceptingStates);
+
+    int numTransitions;
+    cout << "Enter the number of transitions: ";
+    cin >> numTransitions;
+
+    cout << "Enter the transitions in the format 'fromState input toState':\n";
+    for (int i = 0; i < numTransitions; i++)
+    {
+        StateType fromState, toState;
+        InputType input;
+        cin >> fromState >> input >> toState;
+        dfa.addTransition(fromState, input, toState);
+    }
+
+    cout << "Enter the input string to check (as a sequence of characters): ";
+    string inputStr;
+    cin >> inputStr;
+
+    vector<InputType> input(inputStr.begin(), inputStr.end());
+    // vector<InputType> input;
+    // for (char ch : inputStr)
+    // {
+    //     input.push_back(ch - '0'); // Convert character to integer
+    // }
+
+    if (dfa.isAccepted(input))
+    {
+        cout << "The string is accepted by the DFA." << endl;
+    }
+    else
+    {
+        cout << "The string is rejected by the DFA." << endl;
+    }
+
+    return 0;
+}
