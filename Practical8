@@ -1,1 +1,139 @@
+#include <iostream>
+#include <map>
+#include <set>
+#include <vector>
+#include <string>
+#include <stack>
+#include <iomanip>
 
+using namespace std;
+
+map<string, map<string, string>> construct_parsing_table(
+    const map<string, vector<string>>& grammar,
+    const map<string, set<string>>& first_sets,
+    const map<string, set<string>>& follow_sets,
+    bool& is_ll1) {
+    
+    map<string, map<string, string>> parsing_table;
+    is_ll1 = true;
+
+    for (const auto& [non_terminal, productions] : grammar) {
+        for (const auto& production : productions) {
+            set<string> first_set = get_first_of_production(production, first_sets);
+
+            for (const auto& terminal : first_set) {
+                if (terminal != "ε") {
+                    if (parsing_table[non_terminal].count(terminal)) {
+                        is_ll1 = false;
+                    }
+                    parsing_table[non_terminal][terminal] = production;
+                }
+            }
+
+            if (first_set.count("ε")) {
+                for (const auto& terminal : follow_sets.at(non_terminal)) {
+                    if (parsing_table[non_terminal].count(terminal)) {
+                        is_ll1 = false;
+                    }
+                    parsing_table[non_terminal][terminal] = "ε";
+                }
+            }
+        }
+    }
+
+    return parsing_table;
+}
+
+set<string> get_first_of_production(const string& production, const map<string, set<string>>& first_sets) {
+    set<string> first;
+    for (char symbol : production) {
+        string sym(1, symbol);
+        if (first_sets.count(sym)) {
+            first.insert(first_sets.at(sym).begin(), first_sets.at(sym).end());
+            first.erase("ε");
+            if (!first_sets.at(sym).count("ε")) {
+                break;
+            }
+        } else {
+            first.insert(sym);
+            break;
+        }
+    }
+    if (first.empty() || first.count("ε")) {
+        first.insert("ε");
+    }
+    return first;
+}
+
+string parse_string(
+    const map<string, map<string, string>>& parsing_table,
+    const string& start_symbol,
+    const string& input_string) {
+    
+    stack<string> parse_stack;
+    parse_stack.push("$");
+    parse_stack.push(start_symbol);
+
+    string input = input_string + "$";
+    size_t index = 0;
+
+    cout << "\nParsing Input String: " << input_string << endl;
+
+    while (!parse_stack.empty()) {
+        string top = parse_stack.top();
+        parse_stack.pop();
+
+        if (top == string(1, input[index])) {
+            index++;
+        } else if (parsing_table.count(top) && parsing_table.at(top).count(string(1, input[index]))) {
+            string production = parsing_table.at(top).at(string(1, input[index]));
+            if (production != "ε") {
+                for (auto it = production.rbegin(); it != production.rend(); ++it) {
+                    parse_stack.push(string(1, *it));
+                }
+            }
+        } else {
+            return "Invalid string";
+        }
+    }
+
+    return (index == input.size()) ? "Valid string" : "Invalid string";
+}
+
+int main() {
+    // Updated Grammar
+    map<string, vector<string>> grammar = {
+        {"S", {"abc", "ac", "(abc)", "c", "(ac)"}},
+        {"A", {"a", "()", "(ab)", "abcabc", "b"}}
+    };
+
+    map<string, set<string>> first_sets = {
+        {"S", {"a", "(", "c"}},
+        {"A", {"a", "(", "b"}}
+    };
+
+    map<string, set<string>> follow_sets = {
+        {"S", {"$", ")"}},
+        {"A", {"$", ")"}}
+    };
+
+    bool is_ll1;
+    auto parsing_table = construct_parsing_table(grammar, first_sets, follow_sets, is_ll1);
+
+    // Display Predictive Parsing Table
+    cout << "Predictive Parsing Table:\n";
+    for (const auto& [non_terminal, row] : parsing_table) {
+        cout << non_terminal << ":\t";
+        for (const auto& [terminal, production] : row) {
+            cout << terminal << " -> " << production << "\t";
+        }
+        cout << endl;
+    }
+
+    cout << "\nGrammar is " << (is_ll1 ? "LL(1)" : "NOT LL(1)") << endl;
+
+    string input_string = "ac";
+    cout << "\nValidation Result: " << parse_string(parsing_table, "S", input_string) << endl;
+
+    return 0;
+}
